@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Видеочат по городам России</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .video-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        video {
+            width: 400px;
+            height: 300px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .cities {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script>
+        // Простая версия без сборки
+        const { useState, useRef, useEffect } = React;
+        
+        function VideoChat() {
+            const [socket, setSocket] = useState(null);
+            const [currentCity, setCurrentCity] = useState('');
+            const [status, setStatus] = useState('disconnected');
+            const [partnerId, setPartnerId] = useState(null);
+            
+            const localVideoRef = useRef(null);
+            const remoteVideoRef = useRef(null);
+            const peerConnection = useRef(null);
+            const localStream = useRef(null);
+
+            const russianCities = [
+                'Москва', 'Санкт-Петербург', 'Новосибирск', 'Екатеринбург', 'Казань',
+                'Нижний Новгород', 'Челябинск', 'Самара', 'Омск', 'Ростов-на-Дону'
+            ];
+
+            useEffect(() => {
+                const newSocket = io(window.CONFIG?.SOCKET_URL || window.location.origin);
+                setSocket(newSocket);
+
+                newSocket.on('connect', () => {
+                    setStatus('connected');
+                    console.log('Connected to server');
+                });
+
+                newSocket.on('room-joined', (city) => {
+                    setStatus(`connected to ${city}`);
+                });
+
+                newSocket.on('partner-found', (foundPartnerId) => {
+                    setPartnerId(foundPartnerId);
+                    setStatus('in call');
+                    startWebRTC(foundPartnerId);
+                });
+
+                newSocket.on('waiting-for-partner', () => {
+                    setStatus('searching for partner');
+                });
+
+                newSocket.on('partner-disconnected', () => {
+                    setStatus('partner disconnected');
+                    setPartnerId(null);
+                    endCall();
+                });
+
+                return () => {
+                    newSocket.disconnect();
+                };
+            }, []);
+
+            const joinCity = async (city) => {
+                if (!socket) return;
+                
+                setCurrentCity(city);
+                socket.emit('join-city-room', city);
+                setStatus(`joined ${city}`);
+                
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: true, 
+                        audio: true 
+                    });
+                    localStream.current = stream;
+                    localVideoRef.current.srcObject = stream;
+                } catch (error) {
+                    console.error('Error accessing media devices:', error);
+                    alert('Не удалось получить доступ к камере и микрофону.');
+                }
+            };
+
+            const findPartner = () => {
+                if (!socket || !currentCity) return;
+                socket.emit('find-partner', currentCity);
+                setStatus('searching...');
+            };
+
+            const startWebRTC = (targetPartnerId) => {
+                if (!localStream.current) return;
+
+                peerConnection.current = new RTCPeerConnection({
+                    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+                });
+
+                localStream.current.getTracks().forEach(track => {
+                    peerConnection.current.addTrack(track, localStream.current);
+                });
+
+                peerConnection.current.ontrack = (event) => {
+                    remoteVideoRef.current.srcObject = event.streams[0];
+                };
+
+                peerConnection.current.onicecandidate = (event) => {
+                    if (event.candidate) {
+                        socket.emit('webrtc-ice-candidate', event.candidate, targetPartnerId);
+                    }
+                };
+
+                peerConnection.current.createOffer()
+                    .then(offer => peerConnection.current.setLocalDescription(offer))
+                    .then(() => {
+                        socket.emit('webrtc-offer', 
+                            peerConnection.current.localDescription, 
+                            targetPartnerId
+                        );
+                    });
+
+                socket.on('webrtc-offer', async (offer, from) => {
+                    await peerConnection.current.setRemoteDescription(offer);
+                    const answer = await peerConnection.current.createAnswer();
+                    await peerConnection.current.setLocalDescription(answer);
+                    socket.emit('webrtc-answer', answer, from);
+                });
+
+                socket.on('webrtc-answer', (answer) => {
+                    peerConnection.current.setRemoteDescription(answer);
+                });
+
+                socket.on('webrtc-ice-candidate', (candidate) => {
+                    peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+                });
+            };
+
+            const endCall = () => {
+                if (peerConnection.current) {
+                    peerConnection.current.close();
+                    peerConnection.current = null;
+                }
+                if (socket && partnerId) {
+                    socket.emit('end-call');
+                }
+                setPartnerId(null);
+                setStatus(`connected to ${currentCity}`);
+            };
+
+            const leaveCity = () => {
+                endCall();
+                setCurrentCity('');
+                setStatus('connected');
+                if (localStream.current) {
+                    localStream.current.getTracks().forEach(track => track.stop());
+                    localStream.current = null;
+                }
+                if (localVideoRef.current) {
+                    localVideoRef.current.srcObject = null;
+                }
+            };
+
+            return React.createElement('div', { style: { padding: '20px' } },
+                React.createElement('h1', null, '🎥 Видеочат знакомств по городам России'),
+                
+                !currentCity 
+                    ? React.createElement('div', null,
+                        React.createElement('h2', null, 'Выберите ваш город:'),
+                        React.createElement('div', { className: 'cities' },
+                            russianCities.map(city => 
+                                React.createElement('button', {
+                                    key: city,
+                                    onClick: () => joinCity(city)
+                                }, city)
+                            )
+                        )
+                      )
+                    : React.createElement('div', null,
+                        React.createElement('h2', null, `Город: ${currentCity}`),
+                        React.createElement('p', null, `Статус: ${status}`),
+                        
+                        React.createElement('div', null,
+                            !partnerId 
+                                ? React.createElement('button', {
+                                    onClick: findPartner,
+                                    style: { backgroundColor: '#4CAF50', color: 'white' }
+                                  }, '🔍 Найти собеседника')
+                                : React.createElement('button', {
+                                    onClick: endCall,
+                                    style: { backgroundColor: '#f44336', color: 'white' }
+                                  }, '📞 Завершить звонок'),
+                            
+                            React.createElement('button', {
+                                onClick: leaveCity,
+                                style: { marginLeft: '10px' }
+                            }, '🚪 Покинуть город')
+                        ),
+                        
+                        React.createElement('div', { className: 'video-container' },
+                            React.createElement('div', null,
+                                React.createElement('h3', null, 'Ваше видео:'),
+                                React.createElement('video', {
+                                    ref: localVideoRef,
+                                    autoPlay: true,
+                                    muted: true,
+                                    playsInline: true
+                                })
+                            ),
+                            React.createElement('div', null,
+                                React.createElement('h3', null, 'Собеседник:'),
+                                React.createElement('video', {
+                                    ref: remoteVideoRef,
+                                    autoPlay: true,
+                                    playsInline: true
+                                })
+                            )
+                        )
+                      )
+            );
+        }
+
+        // Рендерим приложение
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(VideoChat));
+    </script>
+</body>
+</html>я
