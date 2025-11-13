@@ -5,44 +5,54 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
-app.use(cors({
-  origin: ["http://localhost:3000", "https://videochat-app-shtef.onrender.com"], // замените на ваш домен
-  methods: ["GET", "POST"]
-}));
+app.use(cors());
 app.use(express.json());
 
-// Статика для фронтенда (если хотим все в одном)
+// Статика для фронтенда
 app.use(express.static(path.join(__dirname, '../frontend/public')));
 
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*", // Разрешаем все домены для публичного доступа
+    origin: "*", // Разрешаем все домены для продакшена
     methods: ["GET", "POST"]
   }
 });
 
-// Ваш существующий код socket.io...
-io.on('connection', (socket) => {
-  console.log('✅ Новый пользователь подключен:', socket.id);
+// Храним пары пользователей
+const userPairs = new Map();
 
+io.on('connection', (socket) => {
+  console.log('✅ Пользователь подключен:', socket.id);
+
+  // Присоединение к комнате по городу
   socket.on('join-city-room', (city) => {
     socket.join(city);
     socket.userData = { city, id: socket.id };
-    socket.to(city).emit('user-joined', socket.id);
+    console.log(`👤 ${socket.id} присоединился к ${city}`);
+    
     socket.emit('room-joined', city);
-    console.log(`👤 Пользователь ${socket.id} в городе: ${city}`);
   });
 
+  // Поиск собеседника
   socket.on('find-partner', (city) => {
     const room = io.sockets.adapter.rooms.get(city);
+    
     if (room && room.size > 1) {
       const users = Array.from(room).filter(id => id !== socket.id);
+      
       if (users.length > 0) {
         const partnerId = users[0];
-        socket.partnerId = partnerId;
-        socket.to(partnerId).emit('partner-found', socket.id);
+        
+        // Создаем пару
+        userPairs.set(socket.id, partnerId);
+        userPairs.set(partnerId, socket.id);
+        
+        // Уведомляем обоих пользователей
         socket.emit('partner-found', partnerId);
+        socket.to(partnerId).emit('partner-found', socket.id);
+        
+        console.log(`🤝 Создана пара: ${socket.id} и ${partnerId}`);
       } else {
         socket.emit('waiting-for-partner');
       }
@@ -64,11 +74,35 @@ io.on('connection', (socket) => {
     socket.to(partnerId).emit('webrtc-ice-candidate', candidate, socket.id);
   });
 
+  // Завершение звонка
+  socket.on('end-call', () => {
+    const partnerId = userPairs.get(socket.id);
+    if (partnerId) {
+      socket.to(partnerId).emit('call-ended');
+      userPairs.delete(socket.id);
+      userPairs.delete(partnerId);
+    }
+  });
+
+  // Отключение
   socket.on('disconnect', () => {
     console.log('❌ Пользователь отключен:', socket.id);
-    if (socket.partnerId) {
-      socket.to(socket.partnerId).emit('partner-disconnected');
+    
+    const partnerId = userPairs.get(socket.id);
+    if (partnerId) {
+      socket.to(partnerId).emit('partner-disconnected');
+      userPairs.delete(socket.id);
+      userPairs.delete(partnerId);
     }
+  });
+});
+
+// API для проверки
+app.get('/api/status', (req, res) => {
+  res.json({ 
+    status: 'Server is running', 
+    activeConnections: io.engine.clientsCount,
+    activePairs: userPairs.size / 2
   });
 });
 
@@ -79,5 +113,5 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Публичный сервер запущен на порту ${PORT}`);
+  console.log(`🚀 Сервер запущен на порту ${PORT}`);
 });
