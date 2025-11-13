@@ -6,7 +6,7 @@ const path = require('path');
 
 const app = express();
 app.use(cors({
-  origin: ["http://localhost:3000", "https://your-app.vercel.app"], // замените на ваш домен
+  origin: ["http://localhost:3000", "https://videochat-app-shtef.onrender.com"], // замените на ваш домен
   methods: ["GET", "POST"]
 }));
 app.use(express.json());
