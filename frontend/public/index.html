@@ -6,184 +6,99 @@
     <title>Видеочат по городам России</title>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            margin: 0;
             padding: 20px;
-            color: #333;
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
         }
-        
         .container {
-            max-width: 1200px;
+            max-width: 1000px;
             margin: 0 auto;
             background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        
         h1 {
             text-align: center;
-            color: #4a5568;
-            margin-bottom: 30px;
-            font-size: 2.5em;
+            color: #333;
         }
-        
-        .cities-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 30px 0;
-        }
-        
-        .city-btn {
-            padding: 15px;
-            background: #4299e1;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .city-btn:hover {
-            background: #3182ce;
-            transform: translateY(-2px);
-        }
-        
-        .video-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin: 30px 0;
-        }
-        
-        .video-box {
-            background: #f7fafc;
-            border-radius: 10px;
-            padding: 15px;
-            border: 2px solid #e2e8f0;
-        }
-        
-        .video-box h3 {
-            text-align: center;
-            margin-bottom: 10px;
-            color: #4a5568;
-        }
-        
-        video {
-            width: 100%;
-            height: 300px;
-            border-radius: 8px;
-            background: #000;
-            border: 2px solid #cbd5e0;
-        }
-        
-        .controls {
+        .cities {
             display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin: 20px 0;
             flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+            justify-content: center;
         }
-        
-        .btn {
-            padding: 12px 24px;
+        .city-btn {
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 16px;
+            border-radius: 5px;
             cursor: pointer;
-            transition: all 0.3s;
-            font-weight: bold;
+            font-size: 16px;
         }
-        
+        .city-btn:hover {
+            background: #45a049;
+        }
+        .video-container {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+        .video-box {
+            text-align: center;
+        }
+        video {
+            width: 400px;
+            height: 300px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            background: #000;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .btn {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
         .btn-primary {
-            background: #48bb78;
+            background: #2196F3;
             color: white;
         }
-        
-        .btn-primary:hover {
-            background: #38a169;
-        }
-        
         .btn-danger {
-            background: #f56565;
+            background: #f44336;
             color: white;
         }
-        
-        .btn-danger:hover {
-            background: #e53e3e;
-        }
-        
         .btn-warning {
-            background: #ed8936;
+            background: #ff9800;
             color: white;
         }
-        
-        .btn-warning:hover {
-            background: #dd6b20;
-        }
-        
-        .btn-test {
-            background: #9f7aea;
-            color: white;
-        }
-        
-        .btn-test:hover {
-            background: #805ad5;
-        }
-        
         .status {
             text-align: center;
-            padding: 15px;
-            background: #ebf8ff;
-            border-radius: 8px;
-            margin: 20px 0;
-            font-size: 18px;
+            padding: 10px;
+            margin: 10px 0;
+            background: #e3f2fd;
+            border-radius: 5px;
             font-weight: bold;
-            color: #2b6cb0;
-            border: 2px solid #bee3f8;
         }
-        
-        .status.error {
-            background: #fed7d7;
-            color: #c53030;
-            border-color: #feb2b2;
-        }
-        
-        .status.success {
-            background: #c6f6d5;
-            color: #276749;
-            border-color: #9ae6b4;
-        }
-        
-        .debug-info {
-            background: #f7fafc;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-            border: 1px solid #e2e8f0;
-            font-family: monospace;
-            font-size: 14px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        
         @media (max-width: 768px) {
             .video-container {
-                grid-template-columns: 1fr;
+                flex-direction: column;
+                align-items: center;
             }
-            
-            .cities-grid {
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            video {
+                width: 100%;
+                max-width: 400px;
             }
         }
     </style>
@@ -191,478 +106,242 @@
 <body>
     <div class="container">
         <h1>🎥 Видеочат знакомств по городам России</h1>
+        <div id="status" class="status">Подключение...</div>
         
-        <div id="app">
-            <div class="status" id="status">Подключение к серверу...</div>
-            
-            <!-- Выбор города -->
-            <div id="citySelection">
-                <h2 style="text-align: center; margin-bottom: 20px;">Выберите ваш город:</h2>
-                <div class="cities-grid" id="citiesGrid">
-                    <!-- Города будут добавлены через JavaScript -->
-                </div>
+        <div id="citySelection">
+            <h2>Выберите ваш город:</h2>
+            <div class="cities" id="citiesList">
+                <!-- Города загружаются через JS -->
+            </div>
+        </div>
+        
+        <div id="videoChat" style="display: none;">
+            <div class="controls">
+                <button class="btn btn-primary" onclick="findPartner()">🔍 Найти собеседника</button>
+                <button class="btn btn-danger" onclick="endCall()" style="display: none;">📞 Завершить звонок</button>
+                <button class="btn btn-warning" onclick="leaveCity()">🚪 Сменить город</button>
             </div>
             
-            <!-- Видеочат -->
-            <div id="videoChat" style="display: none;">
-                <div class="status" id="chatStatus">Выберите город чтобы начать</div>
-                
-                <div class="controls">
-                    <button class="btn btn-primary" onclick="videoChat.findPartner()" id="findBtn">
-                        🔍 Найти собеседника
-                    </button>
-                    <button class="btn btn-danger" onclick="videoChat.endCall()" id="endBtn" style="display: none;">
-                        📞 Завершить звонок
-                    </button>
-                    <button class="btn btn-warning" onclick="videoChat.leaveCity()">
-                        🚪 Сменить город
-                    </button>
-                    <button class="btn btn-test" onclick="videoChat.testCamera()">
-                        🧪 Тест камеры
-                    </button>
+            <div class="video-container">
+                <div class="video-box">
+                    <h3>Ваше видео</h3>
+                    <video id="localVideo" autoplay muted playsinline></video>
                 </div>
-                
-                <div class="video-container">
-                    <div class="video-box">
-                        <h3>Ваша камера</h3>
-                        <video id="localVideo" autoplay muted playsinline></video>
-                        <div style="text-align: center; margin-top: 10px; font-size: 14px; color: #718096;">
-                            Статус: <span id="localStatus">Неактивна</span>
-                        </div>
-                    </div>
-                    
-                    <div class="video-box">
-                        <h3>Собеседник</h3>
-                        <video id="remoteVideo" autoplay playsinline></video>
-                        <div style="text-align: center; margin-top: 10px; font-size: 14px; color: #718096;">
-                            Статус: <span id="remoteStatus">Нет подключения</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="debug-info" id="debugInfo">
-                    Журнал отладки будет здесь...
+                <div class="video-box">
+                    <h3>Собеседник</h3>
+                    <video id="remoteVideo" autoplay playsinline></video>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        class VideoChat {
-            constructor() {
-                this.socket = null;
-                this.currentCity = '';
-                this.partnerId = null;
-                this.peerConnection = null;
-                this.localStream = null;
-                this.isConnected = false;
-                
-                this.russianCities = [
-                    'Москва', 'Санкт-Петербург', 'Новосибирск', 'Екатеринбург', 'Казань',
-                    'Нижний Новгород', 'Челябинск', 'Самара', 'Омск', 'Ростов-на-Дону',
-                    'Уфа', 'Красноярск', 'Воронеж', 'Пермь', 'Волгоград',
-                    'Краснодар', 'Саратов', 'Тюмень', 'Тольятти', 'Ижевск'
-                ];
-                
-                this.init();
-            }
-            
-            init() {
-                this.renderCities();
-                this.connectToServer();
-                this.updateStatus('Инициализация...', 'default');
-            }
-            
-            renderCities() {
-                const citiesGrid = document.getElementById('citiesGrid');
-                citiesGrid.innerHTML = this.russianCities.map(city => `
-                    <button class="city-btn" onclick="videoChat.joinCity('${city}')">
-                        🏙️ ${city}
-                    </button>
-                `).join('');
-            }
-            
-            connectToServer() {
-                const SOCKET_URL = window.location.hostname === 'localhost' 
-                    ? 'http://localhost:5000' 
-                    : 'https://videochat-app-shtef.onrender.com';
-                
-                this.log(`Подключение к серверу: ${SOCKET_URL}`);
-                
-                this.socket = io(SOCKET_URL, {
-                    transports: ['websocket', 'polling']
-                });
-                
-                this.socket.on('connect', () => {
-                    this.isConnected = true;
-                    this.updateStatus('✅ Подключено к серверу', 'success');
-                    this.log('Соединение с сервером установлено');
-                });
-                
-                this.socket.on('disconnect', () => {
-                    this.isConnected = false;
-                    this.updateStatus('❌ Отключено от сервера', 'error');
-                    this.log('Соединение с сервером разорвано');
-                });
-                
-                this.socket.on('room-joined', (city) => {
-                    this.log(`Присоединились к комнате: ${city}`);
-                });
-                
-                this.socket.on('partner-found', (partnerId) => {
-                    this.log(`Найден собеседник: ${partnerId}`);
-                    this.partnerId = partnerId;
-                    this.showVideoChat();
-                    this.startWebRTC(partnerId);
-                });
-                
-                this.socket.on('waiting-for-partner', () => {
-                    this.updateStatus('🔍 Поиск собеседника в вашем городе...', 'default');
-                    this.log('Ожидаем подключения собеседника');
-                });
-                
-                this.socket.on('partner-disconnected', () => {
-                    this.updateStatus('❌ Собеседник отключился', 'error');
-                    this.log('Собеседник отключился');
-                    this.endCall();
-                });
-                
-                this.socket.on('call-ended', () => {
-                    this.updateStatus('📞 Звонок завершен', 'default');
-                    this.log('Собеседник завершил звонок');
-                    this.endCall();
-                });
-                
-                // WebRTC события
-                this.socket.on('webrtc-offer', (offer, from) => {
-                    this.log(`Получен offer от ${from}`);
-                    this.handleOffer(offer, from);
-                });
-                
-                this.socket.on('webrtc-answer', (answer, from) => {
-                    this.log(`Получен answer от ${from}`);
-                    this.handleAnswer(answer);
-                });
-                
-                this.socket.on('webrtc-ice-candidate', (candidate, from) => {
-                    this.log(`Получен ICE кандидат от ${from}`);
-                    this.handleIceCandidate(candidate);
-                });
-            }
-            
-            async joinCity(city) {
-                if (!this.isConnected) {
-                    alert('Сначала подключитесь к серверу');
-                    return;
-                }
-                
-                this.currentCity = city;
-                this.socket.emit('join-city-room', city);
-                this.updateStatus(`📍 Подключено к городу: ${city}`, 'success');
-                this.log(`Выбран город: ${city}`);
-                
-                await this.startCamera();
-                this.showVideoChat();
-            }
-            
-            async startCamera() {
-                this.log('Запрос доступа к камере и микрофону...');
-                this.updateLocalStatus('Запрос разрешения...');
-                
-                try {
-                    this.localStream = await navigator.mediaDevices.getUserMedia({
-                        video: {
-                            width: { ideal: 1280 },
-                            height: { ideal: 720 },
-                            frameRate: { ideal: 30 }
-                        },
-                        audio: {
-                            echoCancellation: true,
-                            noiseSuppression: true,
-                            autoGainControl: true
-                        }
-                    });
-                    
-                    const localVideo = document.getElementById('localVideo');
-                    localVideo.srcObject = this.localStream;
-                    
-                    // Проверяем треки
-                    const videoTracks = this.localStream.getVideoTracks();
-                    const audioTracks = this.localStream.getAudioTracks();
-                    
-                    this.log(`✅ Камера доступна: ${videoTracks.length} видео трек(ов)`);
-                    this.log(`✅ Микрофон доступен: ${audioTracks.length} аудио трек(ов)`);
-                    
-                    if (videoTracks.length > 0) {
-                        this.updateLocalStatus(`Активна (${videoTracks[0].label || 'камера'})`);
-                    }
-                    
-                    videoTracks[0].onended = () => {
-                        this.updateLocalStatus('Отключена');
-                        this.log('Видео трек завершен');
-                    };
-                    
-                } catch (error) {
-                    this.log(`❌ Ошибка доступа к медиа: ${error.name} - ${error.message}`);
-                    this.updateLocalStatus('Ошибка доступа');
-                    
-                    let message = 'Не удалось получить доступ к камере/микрофону. ';
-                    switch(error.name) {
-                        case 'NotAllowedError':
-                            message += 'Разрешите доступ к камере в настройках браузера.';
-                            break;
-                        case 'NotFoundError':
-                            message += 'Камера не найдена.';
-                            break;
-                        case 'NotSupportedError':
-                            message += 'Ваш браузер не поддерживает видеочат.';
-                            break;
-                        case 'NotReadableError':
-                            message += 'Камера используется другим приложением.';
-                            break;
-                        default:
-                            message += `Ошибка: ${error.message}`;
-                    }
-                    
-                    alert(message);
-                }
-            }
-            
-            findPartner() {
-                if (!this.currentCity) {
-                    alert('Сначала выберите город');
-                    return;
-                }
-                
-                this.log(`Поиск собеседника в городе: ${this.currentCity}`);
-                this.socket.emit('find-partner', this.currentCity);
-                this.updateStatus('🔍 Ищем собеседника...', 'default');
-            }
-            
-            startWebRTC(partnerId) {
-                if (!this.localStream) {
-                    this.log('❌ Локальный поток не доступен');
-                    return;
-                }
-                
-                this.log(`Запуск WebRTC с собеседником: ${partnerId}`);
-                
-                try {
-                    this.peerConnection = new RTCPeerConnection({
-                        iceServers: [
-                            { urls: 'stun:stun.l.google.com:19302' },
-                            {
-                                urls: 'turn:openrelay.metered.ca:80',
-                                username: 'openrelayproject',
-                                credential: 'openrelayproject'
-                            },
-                            {
-                                urls: 'turn:openrelay.metered.ca:443',
-                                username: 'openrelayproject',
-                                credential: 'openrelayproject'
-                            },
-                            {
-                                urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-                                username: 'openrelayproject',
-                                credential: 'openrelayproject'
-                            }
-                        ]
-                    });
-                    
-                    // Добавляем локальные треки
-                    this.localStream.getTracks().forEach(track => {
-                        this.peerConnection.addTrack(track, this.localStream);
-                        this.log(`Добавлен трек: ${track.kind}`);
-                    });
-                    
-                    // Обработка удаленного потока
-                    this.peerConnection.ontrack = (event) => {
-                        this.log('✅ Получен удаленный медиапоток');
-                        const remoteVideo = document.getElementById('remoteVideo');
-                        remoteVideo.srcObject = event.streams[0];
-                        this.updateRemoteStatus('Подключен');
-                        
-                        event.streams[0].getTracks().forEach(track => {
-                            track.onended = () => {
-                                this.updateRemoteStatus('Отключен');
-                                this.log('Удаленный трек завершен');
-                            };
-                        });
-                    };
-                    
-                    // ICE кандидаты
-                    this.peerConnection.onicecandidate = (event) => {
-                        if (event.candidate) {
-                            this.socket.emit('webrtc-ice-candidate', event.candidate, partnerId);
-                            this.log('Отправлен ICE кандидат');
-                        }
-                    };
-                    
-                    this.peerConnection.oniceconnectionstatechange = () => {
-                        this.log(`ICE состояние: ${this.peerConnection.iceConnectionState}`);
-                    };
-                    
-                    // Создаем offer
-                    this.peerConnection.createOffer()
-                        .then(offer => {
-                            this.log('Создан WebRTC offer');
-                            return this.peerConnection.setLocalDescription(offer);
-                        })
-                        .then(() => {
-                            this.socket.emit('webrtc-offer', this.peerConnection.localDescription, partnerId);
-                            this.log('Offer отправлен собеседнику');
-                        })
-                        .catch(error => {
-                            this.log(`❌ Ошибка создания offer: ${error}`);
-                        });
-                        
-                } catch (error) {
-                    this.log(`❌ Ошибка инициализации WebRTC: ${error}`);
-                }
-            }
-            
-            async handleOffer(offer, from) {
-                if (!this.peerConnection) return;
-                
-                try {
-                    this.log('Обработка входящего offer');
-                    await this.peerConnection.setRemoteDescription(offer);
-                    const answer = await this.peerConnection.createAnswer();
-                    await this.peerConnection.setLocalDescription(answer);
-                    this.socket.emit('webrtc-answer', answer, from);
-                    this.log('Answer отправлен собеседнику');
-                } catch (error) {
-                    this.log(`❌ Ошибка обработки offer: ${error}`);
-                }
-            }
-            
-            async handleAnswer(answer) {
-                if (!this.peerConnection) return;
-                
-                try {
-                    this.log('Обработка входящего answer');
-                    await this.peerConnection.setRemoteDescription(answer);
-                    this.log('WebRTC соединение установлено');
-                    this.updateStatus('✅ Видеозвонок активен', 'success');
-                } catch (error) {
-                    this.log(`❌ Ошибка обработки answer: ${error}`);
-                }
-            }
-            
-            async handleIceCandidate(candidate) {
-                if (!this.peerConnection) return;
-                
-                try {
-                    await this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-                    this.log('ICE кандидат добавлен');
-                } catch (error) {
-                    this.log(`❌ Ошибка добавления ICE кандидата: ${error}`);
-                }
-            }
-            
-            endCall() {
-                this.log('Завершение звонка');
-                
-                if (this.peerConnection) {
-                    this.peerConnection.close();
-                    this.peerConnection = null;
-                }
-                
-                if (this.partnerId) {
-                    this.socket.emit('end-call');
-                    this.partnerId = null;
-                }
-                
-                // Останавливаем удаленное видео
-                const remoteVideo = document.getElementById('remoteVideo');
-                if (remoteVideo.srcObject) {
-                    remoteVideo.srcObject.getTracks().forEach(track => track.stop());
-                    remoteVideo.srcObject = null;
-                }
-                
-                this.updateRemoteStatus('Нет подключения');
-                this.updateStatus('Готов к поиску собеседника', 'default');
-                this.toggleCallButtons(false);
-            }
-            
-            leaveCity() {
-                this.log('Выход из города');
-                this.endCall();
-                
-                // Останавливаем локальное видео
-                if (this.localStream) {
-                    this.localStream.getTracks().forEach(track => track.stop());
-                    this.localStream = null;
-                }
-                
-                const localVideo = document.getElementById('localVideo');
-                localVideo.srcObject = null;
-                
-                this.currentCity = '';
-                this.updateLocalStatus('Неактивна');
-                this.updateRemoteStatus('Нет подключения');
-                this.updateStatus('Выберите город чтобы начать', 'default');
-                
-                this.showCitySelection();
-            }
-            
-            testCamera() {
-                if (this.localStream) {
-                    const videoTracks = this.localStream.getVideoTracks();
-                    const audioTracks = this.localStream.getAudioTracks();
-                    
-                    alert(`✅ Камера работает!\nВидео: ${videoTracks.length} трек(ов)\nАудио: ${audioTracks.length} трек(ов)`);
-                    this.log('Тест камеры: OK');
-                } else {
-                    alert('⚠️ Камера не активирована. Выберите город для теста.');
-                    this.log('Тест камеры: не активирована');
-                }
-            }
-            
-            // Вспомогательные методы
-            showVideoChat() {
-                document.getElementById('citySelection').style.display = 'none';
-                document.getElementById('videoChat').style.display = 'block';
-                this.toggleCallButtons(false);
-            }
-            
-            showCitySelection() {
-                document.getElementById('citySelection').style.display = 'block';
-                document.getElementById('videoChat').style.display = 'none';
-            }
-            
-            toggleCallButtons(inCall) {
-                document.getElementById('findBtn').style.display = inCall ? 'none' : 'block';
-                document.getElementById('endBtn').style.display = inCall ? 'block' : 'none';
-            }
-            
-            updateStatus(message, type = 'default') {
-                const statusElement = document.getElementById('chatStatus');
-                statusElement.textContent = message;
-                statusElement.className = `status ${type}`;
-            }
-            
-            updateLocalStatus(status) {
-                document.getElementById('localStatus').textContent = status;
-            }
-            
-            updateRemoteStatus(status) {
-                document.getElementById('remoteStatus').textContent = status;
-            }
-            
-            log(message) {
-                const debugInfo = document.getElementById('debugInfo');
-                const timestamp = new Date().toLocaleTimeString();
-                debugInfo.innerHTML = `[${timestamp}] ${message}<br>` + debugInfo.innerHTML;
-                console.log(`[VideoChat] ${message}`);
-            }
+        // Конфигурация
+        const SOCKET_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:5000' 
+            : 'https://videochat-app-shtef.onrender.com';
+
+        // Глобальные переменные
+        let socket;
+        let currentCity = '';
+        let partnerId = null;
+        let peerConnection;
+        let localStream;
+
+        const cities = [
+            'Москва', 'Санкт-Петербург', 'Новосибирск', 'Екатеринбург', 'Казань',
+            'Нижний Новгород', 'Челябинск', 'Самара', 'Омск', 'Ростов-на-Дону',
+            'Уфа', 'Красноярск', 'Воронеж', 'Пермь', 'Волгоград'
+        ];
+
+        // Инициализация
+        function init() {
+            renderCities();
+            connectToServer();
         }
-        
-        // Инициализация при загрузке страницы
-        let videoChat;
-        window.addEventListener('load', () => {
-            videoChat = new VideoChat();
-        });
+
+        function renderCities() {
+            const citiesList = document.getElementById('citiesList');
+            citiesList.innerHTML = cities.map(city => 
+                `<button class="city-btn" onclick="joinCity('${city}')">${city}</button>`
+            ).join('');
+        }
+
+        function connectToServer() {
+            socket = io(SOCKET_URL);
+
+            socket.on('connect', () => {
+                updateStatus('✅ Подключено к серверу');
+            });
+
+            socket.on('room-joined', (city) => {
+                updateStatus(`✅ В комнате: ${city}`);
+            });
+
+            socket.on('partner-found', (foundPartnerId) => {
+                partnerId = foundPartnerId;
+                updateStatus('✅ Собеседник найден!');
+                startWebRTC(foundPartnerId);
+                document.querySelector('.btn-primary').style.display = 'none';
+                document.querySelector('.btn-danger').style.display = 'inline-block';
+            });
+
+            socket.on('waiting-for-partner', () => {
+                updateStatus('🔍 Ищем собеседника...');
+            });
+
+            socket.on('partner-disconnected', () => {
+                updateStatus('❌ Собеседник отключился');
+                endCall();
+            });
+
+            // WebRTC события
+            socket.on('webrtc-offer', handleOffer);
+            socket.on('webrtc-answer', handleAnswer);
+            socket.on('webrtc-ice-candidate', handleIceCandidate);
+        }
+
+        async function joinCity(city) {
+            currentCity = city;
+            socket.emit('join-city-room', city);
+            
+            // Запускаем камеру
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: true, 
+                    audio: true 
+                });
+                document.getElementById('localVideo').srcObject = localStream;
+                updateStatus(`✅ Камера запущена в городе: ${city}`);
+            } catch (error) {
+                updateStatus('❌ Ошибка доступа к камере');
+                alert('Разрешите доступ к камере и микрофону');
+                return;
+            }
+            
+            document.getElementById('citySelection').style.display = 'none';
+            document.getElementById('videoChat').style.display = 'block';
+        }
+
+        function findPartner() {
+            if (!currentCity) return;
+            socket.emit('find-partner', currentCity);
+        }
+
+        function startWebRTC(targetPartnerId) {
+            if (!localStream) return;
+
+            // Создаем PeerConnection с надежными TURN серверами
+            peerConnection = new RTCPeerConnection({
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    {
+                        urls: 'turn:openrelay.metered.ca:80',
+                        username: 'openrelayproject',
+                        credential: 'openrelayproject'
+                    },
+                    {
+                        urls: 'turn:openrelay.metered.ca:443',
+                        username: 'openrelayproject', 
+                        credential: 'openrelayproject'
+                    },
+                    {
+                        urls: 'turn:turn.quickblox.com:3478',
+                        username: 'quickblox',
+                        credential: 'baccb97ba2d92d71e26eb7c'
+                    }
+                ]
+            });
+
+            // Ключевое исправление: добавляем треки ПРАВИЛЬНО
+            localStream.getTracks().forEach(track => {
+                console.log('Adding track:', track.kind);
+                peerConnection.addTrack(track, localStream);
+            });
+
+            // Обработка входящего видео - самое важное!
+            peerConnection.ontrack = (event) => {
+                console.log('Received remote track:', event.track.kind);
+                const remoteVideo = document.getElementById('remoteVideo');
+                if (event.streams && event.streams[0]) {
+                    remoteVideo.srcObject = event.streams[0];
+                }
+            };
+
+            // ICE кандидаты
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.emit('webrtc-ice-candidate', event.candidate, targetPartnerId);
+                }
+            };
+
+            // Создаем offer
+            peerConnection.createOffer()
+                .then(offer => peerConnection.setLocalDescription(offer))
+                .then(() => {
+                    socket.emit('webrtc-offer', peerConnection.localDescription, targetPartnerId);
+                })
+                .catch(console.error);
+        }
+
+        async function handleOffer(offer, from) {
+            if (!peerConnection) return;
+            
+            await peerConnection.setRemoteDescription(offer);
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            socket.emit('webrtc-answer', answer, from);
+        }
+
+        async function handleAnswer(answer) {
+            if (!peerConnection) return;
+            await peerConnection.setRemoteDescription(answer);
+        }
+
+        async function handleIceCandidate(candidate) {
+            if (!peerConnection) return;
+            await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+        }
+
+        function endCall() {
+            if (peerConnection) {
+                peerConnection.close();
+                peerConnection = null;
+            }
+            partnerId = null;
+            
+            const remoteVideo = document.getElementById('remoteVideo');
+            if (remoteVideo.srcObject) {
+                remoteVideo.srcObject.getTracks().forEach(track => track.stop());
+                remoteVideo.srcObject = null;
+            }
+            
+            document.querySelector('.btn-primary').style.display = 'inline-block';
+            document.querySelector('.btn-danger').style.display = 'none';
+            updateStatus('Готов к поиску');
+        }
+
+        function leaveCity() {
+            endCall();
+            currentCity = '';
+            
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            
+            document.getElementById('localVideo').srcObject = null;
+            document.getElementById('citySelection').style.display = 'block';
+            document.getElementById('videoChat').style.display = 'none';
+            updateStatus('Выберите город');
+        }
+
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+        }
+
+        // Запуск при загрузке
+        window.addEventListener('load', init);
     </script>
 </body>
 </html>

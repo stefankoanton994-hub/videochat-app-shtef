@@ -2,35 +2,29 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-const path = require('path');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Статика для фронтенда
-app.use(express.static(path.join(__dirname, '../frontend/public')));
-
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*", // Разрешаем все домены для продакшена
+    origin: "*",
     methods: ["GET", "POST"]
   }
 });
 
-// Храним пары пользователей
-const userPairs = new Map();
+// Простое хранилище пар пользователей
+const activePairs = new Map();
 
 io.on('connection', (socket) => {
   console.log('✅ Пользователь подключен:', socket.id);
 
-  // Присоединение к комнате по городу
+  // Присоединение к комнате города
   socket.on('join-city-room', (city) => {
     socket.join(city);
-    socket.userData = { city, id: socket.id };
     console.log(`👤 ${socket.id} присоединился к ${city}`);
-    
     socket.emit('room-joined', city);
   });
 
@@ -44,11 +38,11 @@ io.on('connection', (socket) => {
       if (users.length > 0) {
         const partnerId = users[0];
         
-        // Создаем пару
-        userPairs.set(socket.id, partnerId);
-        userPairs.set(partnerId, socket.id);
+        // Сохраняем пару
+        activePairs.set(socket.id, partnerId);
+        activePairs.set(partnerId, socket.id);
         
-        // Уведомляем обоих пользователей
+        // Уведомляем обоих
         socket.emit('partner-found', partnerId);
         socket.to(partnerId).emit('partner-found', socket.id);
         
@@ -74,41 +68,25 @@ io.on('connection', (socket) => {
     socket.to(partnerId).emit('webrtc-ice-candidate', candidate, socket.id);
   });
 
-  // Завершение звонка
-  socket.on('end-call', () => {
-    const partnerId = userPairs.get(socket.id);
-    if (partnerId) {
-      socket.to(partnerId).emit('call-ended');
-      userPairs.delete(socket.id);
-      userPairs.delete(partnerId);
-    }
-  });
-
   // Отключение
   socket.on('disconnect', () => {
     console.log('❌ Пользователь отключен:', socket.id);
     
-    const partnerId = userPairs.get(socket.id);
+    const partnerId = activePairs.get(socket.id);
     if (partnerId) {
       socket.to(partnerId).emit('partner-disconnected');
-      userPairs.delete(socket.id);
-      userPairs.delete(partnerId);
+      activePairs.delete(socket.id);
+      activePairs.delete(partnerId);
     }
   });
 });
 
-// API для проверки
+// Статус сервера
 app.get('/api/status', (req, res) => {
   res.json({ 
     status: 'Server is running', 
-    activeConnections: io.engine.clientsCount,
-    activePairs: userPairs.size / 2
+    activeConnections: io.engine.clientsCount 
   });
-});
-
-// Главная страница
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/public/index.html'));
 });
 
 const PORT = process.env.PORT || 5000;
